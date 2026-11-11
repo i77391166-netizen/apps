@@ -9,6 +9,15 @@
       "code": 1,
       "ver": "1.0",
       "color": "#7c5cff"
+    },
+    {
+      "pkg": "com.ham.chat",
+      "name": "Хам",
+      "desc": "Чат без сервера, сообщения через брокер",
+      "apk": "https://github.com/i77391166-netizen/ham/releases/latest/download/app-debug.apk",
+      "code": 13,
+      "ver": "13.0",
+      "color": "#39c07a"
     }
   ]
 }
