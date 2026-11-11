@@ -164,8 +164,10 @@ function load(force) {
     if (b) b.onclick = function () { load(true); };
     return;
   }
+  var why = String(call('lastError') || '');
   render();
-  if (force) toast('Каталог обновлён');
+  if (why) toast('Нет сети — показываю сохранённый каталог');
+  else if (force) toast('Каталог обновлён');
 }
 
 function render() {

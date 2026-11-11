@@ -152,7 +152,25 @@ public class MainActivity extends Activity {
         LAST_ERR = err.toString();
         String cached = prefs().getString("cat", "");
         if (cached == null) cached = "";
+        if (cached.trim().length() == 0) {
+            String a = assetCatalog();
+            if (a != null && a.trim().startsWith("{")) return a;
+        }
         return cached;
+    }
+
+    private String assetCatalog() {
+        try {
+            InputStream in = getAssets().open("catalog.json");
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = in.read(buf)) > 0) bo.write(buf, 0, r);
+            in.close();
+            return new String(bo.toByteArray(), "UTF-8");
+        } catch (Throwable t) {
+            return "";
+        }
     }
 
     private void launchInstall(File f) {
