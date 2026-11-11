@@ -1,0 +1,76 @@
+name: build apk
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Постоянный ключ подписи
+        run: |
+          mkdir -p signing
+          if [ ! -f signing/ham.jks ]; then
+            keytool -genkeypair -keystore signing/ham.jks -alias ham \
+              -keyalg RSA -keysize 2048 -validity 12000 \
+              -storepass hamham -keypass hamham \
+              -dname "CN=Ham Apps, O=Ham, C=RU"
+            git config user.name "ham-bot"
+            git config user.email "ham-bot@users.noreply.github.com"
+            git add -f signing/ham.jks
+            git commit -m "постоянный ключ подписи"
+            git push
+          fi
+          ls -l signing/
+
+      - name: Проверка JS
+        run: |
+          cat > /tmp/check.js <<'EOF'
+          const fs = require("fs");
+          for (const f of process.argv.slice(2)) {
+            const h = fs.readFileSync(f, "utf8");
+            const m = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+            for (const x of m) new Function(x[1]);
+            console.log("JS ok:", f, "скриптов:", m.length);
+          }
+          EOF
+          node /tmp/check.js store/src/main/assets/index.html
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Size
+        run: |
+          ls -lh store/build/outputs/apk/debug/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apps-apk
+          path: store/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Приложения
+          body: Свежие сборки. Магазин — store-debug.apk.
+          make_latest: true
+          files: |
+            store/build/outputs/apk/debug/store-debug.apk

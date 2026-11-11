@@ -1,0 +1,14 @@
+{
+  "updated": "2026-11-11",
+  "apps": [
+    {
+      "pkg": "com.ham.store",
+      "name": "Магазин",
+      "desc": "Ставит и обновляет приложения",
+      "apk": "https://github.com/i77391166-netizen/apps/releases/download/latest/store-debug.apk",
+      "code": 1,
+      "ver": "1.0",
+      "color": "#7c5cff"
+    }
+  ]
+}

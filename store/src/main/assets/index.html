@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Магазин</title>
+<style>
+:root{
+  --bg:#0a0a0f;--txt:#f3f2f8;--dim:#9a9aa8;--dim2:#6e6e7c;
+  --line:rgba(255,255,255,.09);--card:rgba(255,255,255,.055);
+  --a1:#7c5cff;--a2:#ff5c9e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:-apple-system,"Roboto",system-ui,sans-serif;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;
+}
+body:before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(120% 70% at 8% -8%,#261b4a 0%,#120e22 45%,#0a0a0f 75%);
+}
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px}
+h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.6px;display:flex;align-items:baseline;gap:7px}
+h1 em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--dim2)}
+.ibtn{
+  width:38px;height:38px;border-radius:13px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:16px;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.ibtn:active{background:rgba(255,255,255,.13)}
+#bar{height:3px;background:transparent;margin:0 16px;border-radius:3px;overflow:hidden;opacity:0;transition:opacity .2s}
+#bar.on{opacity:1;background:rgba(255,255,255,.1)}
+#fill{height:100%;width:0;background:linear-gradient(90deg,var(--a1),var(--a2));transition:width .18s}
+main{flex:1;overflow-y:auto;padding:6px 8px 24px;-webkit-overflow-scrolling:touch}
+.card{
+  display:flex;gap:12px;align-items:center;padding:11px 12px;border-radius:17px;
+  background:var(--card);border:1px solid var(--line);margin:0 4px 9px;position:relative;
+}
+.card:active{background:rgba(255,255,255,.1)}
+.ico{
+  width:48px;height:48px;border-radius:14px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;color:#fff;
+}
+.info{flex:1;min-width:0}
+.nm{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds{font-size:12.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st{font-size:11.5px;color:var(--dim2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st.up{color:#c9b8ff}
+.act{
+  border:0;border-radius:12px;padding:9px 14px;font-size:13px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));font-family:inherit;flex:0 0 auto;
+}
+.act.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);font-weight:600}
+.empty{padding:70px 24px;text-align:center;color:var(--dim)}
+.empty b{display:block;font-size:16px;color:var(--txt);margin-bottom:8px}
+.empty p{margin:0;font-size:13.5px;line-height:1.5}
+.gbtn{
+  border:0;border-radius:14px;padding:13px 22px;font-size:14px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));font-family:inherit;margin-top:16px;
+}
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);
+  background:#1d1a2e;border:1px solid var(--line);border-radius:14px;
+  padding:11px 16px;font-size:13px;max-width:86%;text-align:center;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:30;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.modal{
+  position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.62);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.mbox{
+  width:100%;background:#15131f;border-radius:22px 22px 0 0;padding:18px 16px 22px;
+  border-top:1px solid var(--line);
+}
+.mttl{font-size:15px;font-weight:800;margin:0 4px 6px}
+.msub{font-size:13px;color:var(--dim);margin:0 4px 16px}
+.mrow{display:flex;gap:8px}
+.mbtn{
+  flex:1;border:0;border-radius:14px;padding:14px;font-size:14px;font-weight:700;
+  font-family:inherit;color:var(--txt);background:var(--card);
+}
+.mbtn.red{background:#3a1a24;color:#ff8fa8}
+.hint{padding:14px 12px 4px;font-size:11.5px;color:var(--dim2);text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Магазин<em id="cnt"></em></h1>
+    <button class="ibtn" id="bRef">⟳</button>
+  </header>
+  <div id="bar"><div id="fill"></div></div>
+  <main id="main"></main>
+</div>
+<div id="toast"></div>
+
+<script>
+var S = window.Store || {};
+var CAT = null;
+var SELF = { code: 0, ver: '', pkg: 'com.ham.store' };
+var busy = false;
+var lp = null, fired = false;
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function call(fn) {
+  try {
+    if (!S || typeof S[fn] !== 'function') return null;
+    var a = [].slice.call(arguments, 1);
+    return S[fn].apply(S, a);
+  } catch (e) { return null; }
+}
+function toast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.className = 'on';
+  clearTimeout(t._t);
+  t._t = setTimeout(function () { t.className = ''; }, 2600);
+}
+function letter(name) {
+  var s = String(name || '?').trim();
+  return s ? s.charAt(0).toUpperCase() : '?';
+}
+function grad(color) {
+  var c = color || '#7c5cff';
+  return 'linear-gradient(135deg,' + c + ',#2b2352)';
+}
+function fileOf(url) {
+  var s = String(url || '').split('?')[0].split('/');
+  return s[s.length - 1] || 'app.apk';
+}
+function info(pkg) {
+  var raw = call('info', pkg);
+  try { return JSON.parse(raw || '{}'); } catch (e) { return {}; }
+}
+
+function load(force) {
+  var raw = call('catalog');
+  if (raw && String(raw).trim().charAt(0) === '{') {
+    try {
+      CAT = JSON.parse(raw);
+    } catch (e) {
+      CAT = null;
+    }
+  }
+  if (!CAT) {
+    $('main').innerHTML = '<div class="empty"><b>Каталог не загрузился</b>' +
+      '<p>Нет интернета или GitHub недоступен. Попробуй ещё раз.</p>' +
+      '<button class="gbtn" id="retry">Обновить</button></div>';
+    var b = $('retry');
+    if (b) b.onclick = function () { load(true); };
+    return;
+  }
+  render();
+  if (force) toast('Каталог обновлён');
+}
+
+function render() {
+  var apps = (CAT && CAT.apps) ? CAT.apps : [];
+  var main = $('main');
+  $('cnt').textContent = apps.length ? apps.length + ' шт' : '';
+  if (!apps.length) {
+    main.innerHTML = '<div class="empty"><b>Пусто</b><p>В каталоге нет приложений.</p></div>';
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < apps.length; i++) {
+    var a = apps[i];
+    var inf = info(a.pkg);
+    var inst = !!inf.i;
+    var up = inst && (a.code || 0) > (inf.c || 0);
+    var label = !inst ? 'Установить' : (up ? 'Обновить' : 'Открыть');
+    var cls = (!inst || up) ? 'act' : 'act ghost';
+    var st;
+    if (!inst) st = 'не установлено';
+    else if (up) st = 'установлено ' + (inf.v || inf.c) + ' · есть ' + (a.ver || a.code);
+    else st = 'установлено ' + (inf.v || inf.c);
+    h += '<div class="card" data-i="' + i + '">' +
+      '<div class="ico" style="background:' + grad(a.color) + '">' + esc(letter(a.name)) + '</div>' +
+      '<div class="info"><div class="nm">' + esc(a.name) + '</div>' +
+      '<div class="ds">' + esc(a.desc || '') + '</div>' +
+      '<div class="st' + (up ? ' up' : '') + '">' + esc(st) + '</div></div>' +
+      '<button class="' + cls + '" data-act="' + i + '">' + label + '</button>' +
+      '</div>';
+  }
+  h += '<div class="hint">Долгое нажатие на приложение — удалить.<br>Обновления ставятся системным установщиком: подтверди установку.</div>';
+  main.innerHTML = h;
+}
+
+function act(i) {
+  var a = CAT.apps[i];
+  if (!a) return;
+  var inf = info(a.pkg);
+  var inst = !!inf.i;
+  var up = inst && (a.code || 0) > (inf.c || 0);
+  if (!inst || up) {
+    if (busy) { toast('Уже качается, подожди'); return; }
+    if (!a.apk) { toast('В каталоге нет ссылки на APK'); return; }
+    busy = true;
+    toast('Скачиваю ' + a.name + '…');
+    call('install', a.apk, fileOf(a.apk));
+  } else {
+    call('open', a.pkg);
+  }
+}
+
+function askRemove(i) {
+  var a = CAT.apps[i];
+  if (!a) return;
+  var inf = info(a.pkg);
+  if (!inf.i) { toast('Оно и так не установлено'); return; }
+  var box = document.createElement('div');
+  box.innerHTML = '<div class="modal" id="modal"><div class="mbox">' +
+    '<div class="mttl">Удалить «' + esc(a.name) + '»?</div>' +
+    '<div class="msub">Приложение снесётся вместе с данными. Обновиться потом можно заново.</div>' +
+    '<div class="mrow"><button class="mbtn" id="mNo">Отмена</button>' +
+    '<button class="mbtn red" id="mYes">Удалить</button></div></div></div>';
+  document.body.appendChild(box.firstChild);
+  $('mNo').onclick = closeModal;
+  $('modal').addEventListener('click', function (e) { if (e.target.id === 'modal') closeModal(); });
+  $('mYes').onclick = function () {
+    closeModal();
+    call('uninstall', a.pkg);
+  };
+}
+
+function closeModal() {
+  var m = $('modal');
+  if (m && m.parentNode) m.parentNode.removeChild(m);
+}
+
+function wire() {
+  $('bRef').onclick = function () { load(true); };
+
+  $('main').addEventListener('click', function (e) {
+    if (fired) { fired = false; return; }
+    var btn = e.target.closest('[data-act]');
+    if (btn) {
+      act(parseInt(btn.getAttribute('data-act'), 10));
+      return;
+    }
+    var card = e.target.closest('.card');
+    if (card) act(parseInt(card.getAttribute('data-i'), 10));
+  });
+
+  $('main').addEventListener('touchstart', function (e) {
+    var card = e.target.closest('.card');
+    fired = false;
+    if (!card) return;
+    lp = setTimeout(function () {
+      fired = true;
+      askRemove(parseInt(card.getAttribute('data-i'), 10));
+    }, 520);
+  }, { passive: true });
+  $('main').addEventListener('touchend', function () { clearTimeout(lp); });
+  $('main').addEventListener('touchmove', function () { clearTimeout(lp); });
+}
+
+window.mProg = function (pct) {
+  var bar = $('bar'), fill = $('fill');
+  pct = parseInt(pct, 10);
+  if (isNaN(pct) || pct < 0) {
+    bar.className = '';
+    fill.style.width = '0';
+    busy = false;
+    return;
+  }
+  if (pct >= 100) {
+    fill.style.width = '100%';
+    setTimeout(function () { bar.className = ''; fill.style.width = '0'; busy = false; }, 700);
+    return;
+  }
+  bar.className = 'on';
+  fill.style.width = pct + '%';
+};
+window.mToast = function (msg) { toast(msg); };
+window.mBack = function () {
+  var m = $('modal');
+  if (m) { closeModal(); return; }
+  call('exit');
+};
+
+function init() {
+  var s = String(call('self') || '');
+  var parts = s.split('|');
+  SELF.code = parseInt(parts[0], 10) || 0;
+  SELF.ver = parts[1] || '';
+  wire();
+  load(false);
+}
+
+init();
+</script>
+</body>
+</html>

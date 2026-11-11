@@ -1,0 +1,41 @@
+plugins {
+    id 'com.android.application'
+}
+
+def ks = rootProject.file('signing/ham.jks')
+
+android {
+    namespace 'com.ham.store'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.ham.store"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        if (ks.exists()) {
+            ham {
+                storeFile ks
+                storePassword 'hamham'
+                keyAlias 'ham'
+                keyPassword 'hamham'
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            if (ks.exists()) signingConfig signingConfigs.ham
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
