@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<title>Гринд</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#0b0d12;color:#e8ecf4;
+  font-family:-apple-system,"Roboto",system-ui,sans-serif;overscroll-behavior:none}
+body{padding:8px 10px 24px;max-width:560px;margin:0 auto}
+header{display:flex;gap:8px;align-items:stretch;margin-bottom:8px}
+.stat{flex:1;background:#151a24;border:1px solid #232b3a;border-radius:12px;padding:8px 10px;min-width:0}
+.stat b{display:block;font-size:19px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.stat small{color:#7d8798;font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+#pointsBar{background:#151a24;border:1px solid #232b3a;border-radius:12px;padding:7px 10px;
+  display:flex;justify-content:space-between;font-size:12px;color:#9aa5b8;margin-bottom:8px}
+#pointsBar b{color:#ffb347}
+#tap{width:100%;border:0;border-radius:16px;padding:20px 10px;font-size:17px;font-weight:700;
+  color:#08110a;background:linear-gradient(160deg,#6dff9c,#22c55e);letter-spacing:.4px;
+  box-shadow:0 6px 0 #14813f,0 10px 24px rgba(34,197,94,.25);transition:transform .05s,box-shadow .05s;
+  touch-action:manipulation;margin-bottom:10px}
+#tap:active{transform:translateY(4px);box-shadow:0 2px 0 #14813f,0 4px 12px rgba(34,197,94,.2)}
+nav{display:flex;gap:6px;margin-bottom:10px}
+nav button{flex:1;background:#151a24;border:1px solid #232b3a;color:#8794a8;border-radius:10px;
+  padding:9px 2px;font-size:12px;font-weight:600;touch-action:manipulation}
+nav button.on{background:#22c55e17;border-color:#22c55e;color:#5ef08e}
+.tab{display:none}.tab.on{display:block}
+.card{background:#151a24;border:1px solid #232b3a;border-radius:12px;padding:10px;margin-bottom:8px;
+  display:flex;gap:10px;align-items:center}
+.card.locked{opacity:.45}
+.card .ic{font-size:22px;width:30px;text-align:center;flex:none}
+.card .txt{flex:1;min-width:0}
+.card .txt b{display:block;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .txt span{display:block;font-size:11px;color:#8695ab;margin-top:2px}
+.card .side{flex:none;text-align:right}
+.buy{background:#22c55e;color:#06170c;border:0;border-radius:9px;padding:9px 11px;font-weight:700;
+  font-size:12px;min-width:74px;touch-action:manipulation}
+.buy:disabled{background:#252d3b;color:#5d6879}
+.own{font-size:11px;color:#7d8798;margin-top:3px}
+.modes{display:flex;gap:6px;margin-bottom:8px}
+.modes button{flex:1;background:#151a24;border:1px solid #232b3a;color:#8794a8;border-radius:9px;padding:7px;font-size:12px;font-weight:600}
+.modes button.on{background:#ffb34717;border-color:#ffb347;color:#ffb347}
+h3{font-size:12px;color:#7d8798;text-transform:uppercase;letter-spacing:.8px;margin:14px 0 6px}
+.prestigeBox{background:linear-gradient(160deg,#1d1608,#151a24);border:1px solid #4a3a12;border-radius:12px;padding:14px;margin-bottom:10px}
+.prestigeBox p{font-size:12px;color:#9aa5b8;line-height:1.5;margin:0 0 10px}
+.prestigeBox .gain{font-size:22px;font-weight:800;color:#ffb347;margin:4px 0}
+#prestBtn{width:100%;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:700;
+  background:linear-gradient(160deg,#ffcb6b,#ff9f1a);color:#241200}
+#prestBtn:disabled{background:#252d3b;color:#5d6879}
+.mini{font-size:11px;color:#6f7a8c;line-height:1.6}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#22c55e;color:#06170c;
+  font-weight:700;font-size:13px;padding:10px 16px;border-radius:20px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;padding:20px;z-index:60}
+.modal.hidden{display:none}
+.modal .inner{background:#151a24;border:1px solid #2b3547;border-radius:16px;padding:18px;max-width:340px;width:100%}
+.modal h2{margin:0 0 8px;font-size:16px}
+.modal p{font-size:13px;color:#9aa5b8;line-height:1.5;margin:0 0 14px}
+.modal button{width:100%;border:0;border-radius:10px;padding:12px;background:#22c55e;color:#06170c;font-weight:700;font-size:14px}
+.pop{animation:pop .18s}
+@keyframes pop{from{transform:scale(.98)}to{transform:scale(1)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="stat"><b id="uiMoney">0</b><small>опыта</small></div>
+  <div class="stat"><b id="uiRate">0</b><small>в секунду</small></div>
+</header>
+<div id="pointsBar"><span>Форма: <b id="uiPoints">0</b></span><span>множитель ×<b id="uiMult">1.0</b></span></div>
+
+<button id="tap">ТРЕНИРОВАТЬСЯ +<span id="uiClick">1</span></button>
+
+<nav>
+  <button data-tab="gens" class="on">Зал</button>
+  <button data-tab="ups">Улучшения</button>
+  <button data-tab="prest">Форма</button>
+  <button data-tab="stats">Стата</button>
+</nav>
+
+<main>
+  <section id="tab-gens" class="tab on">
+    <div class="modes" id="buyModes">
+      <button data-mode="1" class="on">×1</button>
+      <button data-mode="10">×10</button>
+      <button data-mode="max">МАКС</button>
+    </div>
+    <div id="gensList"></div>
+  </section>
+
+  <section id="tab-ups" class="tab">
+    <div id="clickUps"></div>
+    <h3>Множители тренажёров</h3>
+    <div id="genUps"></div>
+  </section>
+
+  <section id="tab-prest" class="tab">
+    <div class="prestigeBox">
+      <p>Престиж обнуляет опыт, тренажёры и улучшения, но даёт <b>Форму</b>: +20% ко всему за каждую единицу, навсегда.</p>
+      <div class="gain">Награда: +<span id="uiGain">0</span> Формы</div>
+      <button id="prestBtn">ПЕРЕРОДИТЬСЯ</button>
+      <p class="mini" style="margin:10px 0 0">Нужно накопить <b>1.00М</b> опыта за текущую жизнь.</p>
+    </div>
+    <h3>Вечные навыки</h3>
+    <div id="permList"></div>
+  </section>
+
+  <section id="tab-stats" class="tab">
+    <div class="card"><div class="txt">
+      <b>Статистика</b>
+      <span id="stAll">Всего заработано: 0</span>
+      <span id="stTime">В игре: 0м</span>
+      <span id="stPrest">Перерождений: 0</span>
+      <span id="stBest">Лучший доход: 0/с</span>
+    </div></div>
+    <p class="mini">Игра сохраняется автоматически. Оффлайн-доход идёт с пониженной скоростью и ограничен 8 часами.</p>
+    <button id="resetBtn" style="width:100%;margin-top:10px;background:#2a1a1e;border:1px solid #6b2530;color:#ff6b7f;border-radius:10px;padding:12px;font-weight:700">СБРОСИТЬ ВСЁ</button>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<div id="offlineModal" class="modal hidden">
+  <div class="inner">
+    <h2>Пока тебя не было</h2>
+    <p id="offlineText"></p>
+    <button id="offlineOk">ЗАБРАТЬ</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- конфиг баланса ---------- */
+var GENS = [
+  {name:"Отжимания",        ic:"💪", cost:10,    prod:1.2,    growth:1.13},
+  {name:"Турник",           ic:"🏋️", cost:250,   prod:10,     growth:1.13},
+  {name:"Спортзал",         ic:"🏟️", cost:5000,  prod:90,     growth:1.13},
+  {name:"Личный тренер",    ic:"🧑", cost:1e5,   prod:750,    growth:1.13},
+  {name:"Академия",         ic:"🎓", cost:2e6,   prod:6500,   growth:1.13},
+  {name:"Корпорация",       ic:"🏢", cost:5e7,   prod:62000,  growth:1.13},
+  {name:"Синдикат",         ic:"🌐", cost:1.2e9, prod:550000, growth:1.13}
+];
+
+var CLICK_UPS = [
+  {name:"Техника удара",  ic:"👊", cost:50,   mult:3,  desc:"клик ×3"},
+  {name:"Второе дыхание", ic:"🫁", cost:1200, mult:3,  desc:"клик ×3"},
+  {name:"Железная хватка",ic:"🦾", cost:3e4,  mult:5,  desc:"клик ×5"},
+  {name:"Рефлексы",       ic:"⚡", cost:8e5,  mult:5,  desc:"клик ×5"},
+  {name:"Дзен",           ic:"🧘", cost:2e7,  mult:10, desc:"клик ×10"},
+  {name:"Абсолют",        ic:"🌀", cost:1e9,  mult:10, desc:"клик ×10"}
+];
+
+var PERMS = [
+  {name:"Сила",       ic:"🔥", desc:"+50% ко всему за уровень", base:5,  gr:1.8,  max:50},
+  {name:"Кулак",      ic:"✊", desc:"клик ×2 за уровень",       base:3,  gr:1.7,  max:30},
+  {name:"Трудоголизм",ic:"⏳", desc:"+25% к оффлайн-доходу",    base:8,  gr:2.2,  max:6},
+  {name:"Автоклик",   ic:"🖱️", desc:"+1 автоклик в секунду",   base:15, gr:3.0,  max:10}
+];
+
+var PRESTIGE_REQ = 1e6;
+
+/* ---------- состояние ---------- */
+var S;
+
+function fresh(){
+  return {
+    money:0, total:0, totalAll:0, points:0, prestiges:0,
+    gens:[0,0,0,0,0,0,0],
+    genUps:{}, clickUps:[false,false,false,false,false,false],
+    perms:[0,0,0,0], buyMode:1,
+    played:0, lastSave:Date.now(), bestRate:0
+  };
+}
+
+function save(){
+  S.lastSave=Date.now();
+  try{ localStorage.setItem("grind_v1", JSON.stringify(S)); }catch(e){}
+}
+function load(){
+  var raw=null;
+  try{ raw=localStorage.getItem("grind_v1"); }catch(e){}
+  if(!raw){ S=fresh(); return 0; }
+  try{
+    var d=JSON.parse(raw); var n=fresh();
+    for(var k in n){ if(d[k]!==undefined) n[k]=d[k]; }
+    for(var i=0;i<7;i++){ if(typeof n.gens[i]!=="number") n.gens[i]=0; }
+    S=n;
+    var dt=(Date.now()-(S.lastSave||Date.now()))/1000;
+    S.lastSave=Date.now();
+    return dt>0 ? dt : 0;
+  }catch(e){ S=fresh(); return 0; }
+}
+
+/* ---------- формулы ---------- */
+function fmt(n){
+  if(!isFinite(n)) return "∞";
+  if(n<0) return "-"+fmt(-n);
+  if(n<1000){
+    if(n<10) return (Math.round(n*10)/10).toString();
+    return Math.floor(n).toString();
+  }
+  var u=["","К","М","Б","Т","Кв","Кн","Сх","Сп","Ок","Нн","Дц","Ун","Дд"];
+  var i=0;
+  while(n>=1000 && i<u.length-1){ n/=1000; i++; }
+  var t = n<10 ? n.toFixed(2) : n<100 ? n.toFixed(1) : Math.floor(n).toString();
+  return t+u[i];
+}
+
+function genMult(i){
+  var m=1;
+  if(S.genUps[i+"-1"]) m*=3;
+  if(S.genUps[i+"-2"]) m*=3;
+  return m;
+}
+function permForce(){ return Math.pow(1.5, S.perms[0]); }
+function fistMult(){ return Math.pow(2, S.perms[1]); }
+function offlineEfficiency(){ return 0.5 + 0.25*S.perms[2]; }
+function autoClicks(){ return S.perms[3]; }
+function globalMult(){ return (1 + 0.2*S.points) * permForce(); }
+
+function prodOf(i){ return S.gens[i]*GENS[i].prod*genMult(i)*globalMult(); }
+function autoRate(){
+  var s=0; for(var i=0;i<GENS.length;i++) s+=prodOf(i);
+  return s;
+}
+function clickValue(){
+  var c=1;
+  for(var i=0;i<CLICK_UPS.length;i++) if(S.clickUps[i]) c*=CLICK_UPS[i].mult;
+  return c*fistMult()*globalMult();
+}
+function genCost(i,n){
+  var g=GENS[i].growth;
+  var base=GENS[i].cost*Math.pow(g,S.gens[i]);
+  return base*(Math.pow(g,n)-1)/(g-1);
+}
+function maxAffordable(i){
+  var g=GENS[i].growth;
+  var base=GENS[i].cost*Math.pow(g,S.gens[i]);
+  var n=Math.floor(Math.log(S.money*(g-1)/base + 1)/Math.log(g));
+  return n>0?n:0;
+}
+function prestigeGain(){ return Math.floor(10*Math.sqrt(S.total/PRESTIGE_REQ)); }
+function permCost(i){
+  var p=PERMS[i];
+  return Math.floor(p.base*Math.pow(p.gr,S.perms[i]));
+}
+
+/* ---------- экономика ---------- */
+function earn(n){
+  S.money+=n; S.total+=n; S.totalAll+=n;
+  if(!isFinite(S.money)) S.money=Number.MAX_VALUE;
+}
+
+function buyGen(i){
+  var n = S.buyMode==="max" ? maxAffordable(i) : S.buyMode;
+  var avail = maxAffordable(i);
+  if(n>avail) n=avail;
+  if(n<1) return;
+  var c=genCost(i,n);
+  if(c>S.money) return;
+  S.money-=c;
+  S.gens[i]+=n;
+  buildGens(); updateUI(); save();
+}
+
+function buyClickUp(i){
+  if(S.clickUps[i]) return;
+  if(S.money<CLICK_UPS[i].cost) return;
+  S.money-=CLICK_UPS[i].cost;
+  S.clickUps[i]=true;
+  buildUps(); updateUI(); save();
+}
+
+function buyGenUp(i,tier){
+  var key=i+"-"+tier;
+  if(S.genUps[key]) return;
+  var req = tier===1 ? 10 : 30;
+  if(S.gens[i]<req) return;
+  var cost = GENS[i].cost * (tier===1 ? 120 : 2500);
+  if(S.money<cost) return;
+  S.money-=cost;
+  S.genUps[key]=true;
+  buildUps(); updateUI(); save();
+}
+
+function buyPerm(i){
+  if(S.perms[i]>=PERMS[i].max) return;
+  var c=permCost(i);
+  if(S.points<c) return;
+  S.points-=c;
+  S.perms[i]++;
+  buildPerms(); updateUI(); save();
+  toast(PERMS[i].name+" ур."+S.perms[i]);
+}
+
+function doPrestige(){
+  var gain=prestigeGain();
+  if(gain<1) return;
+  if(!confirm("Переродиться и получить +"+gain+" Формы? Опыт, тренажёры и улучшения сбросятся.")) return;
+  S.points+=gain;
+  S.prestiges++;
+  S.money=0; S.total=0;
+  S.gens=[0,0,0,0,0,0,0];
+  S.genUps={};
+  S.clickUps=[false,false,false,false,false,false];
+  buildAll(); updateUI(); save();
+  toast("+"+gain+" Формы");
+}
+
+/* ---------- отрисовка ---------- */
+var elMoney=document.getElementById("uiMoney");
+var elRate=document.getElementById("uiRate");
+var elPoints=document.getElementById("uiPoints");
+var elMult=document.getElementById("uiMult");
+var elClick=document.getElementById("uiClick");
+var elGain=document.getElementById("uiGain");
+var gensList=document.getElementById("gensList");
+var clickUpsEl=document.getElementById("clickUps");
+var genUpsEl=document.getElementById("genUps");
+var permList=document.getElementById("permList");
+var prestBtn=document.getElementById("prestBtn");
+var genCards=[], clickCards=[], genUpCards=[], permCards=[];
+
+function card(ic,title,sub,btnText,cb){
+  var d=document.createElement("div"); d.className="card";
+  var a=document.createElement("div"); a.className="ic"; a.textContent=ic;
+  var t=document.createElement("div"); t.className="txt";
+  var b=document.createElement("b"); b.textContent=title;
+  var s=document.createElement("span"); s.textContent=sub;
+  t.appendChild(b); t.appendChild(s);
+  var side=document.createElement("div"); side.className="side";
+  var btn=document.createElement("button"); btn.className="buy"; btn.textContent=btnText;
+  btn.addEventListener("click",cb);
+  side.appendChild(btn);
+  d.appendChild(a); d.appendChild(t); d.appendChild(side);
+  return {box:d,title:b,sub:s,btn:btn,side:side};
+}
+
+function buildGens(){
+  gensList.innerHTML=""; genCards=[];
+  GENS.forEach(function(g,i){
+    var c=card(g.ic,g.name,"0/с","0",function(){ buyGen(i); });
+    gensList.appendChild(c.box);
+    genCards.push(c);
+  });
+}
+
+function buildUps(){
+  clickUpsEl.innerHTML=""; clickCards=[];
+  CLICK_UPS.forEach(function(u,i){
+    var c=card(u.ic,u.name,u.desc,"0",function(){ buyClickUp(i); });
+    clickUpsEl.appendChild(c.box);
+    clickCards.push(c);
+  });
+  genUpsEl.innerHTML=""; genUpCards=[];
+  GENS.forEach(function(g,i){
+    for(var tier=1;tier<=2;tier++){
+      var c=card("⬆️",g.name+" ×3","ур. "+tier,"0",(function(ii,tt){ return function(){ buyGenUp(ii,tt); }; })(i,tier));
+      genUpsEl.appendChild(c.box);
+      genUpCards.push({el:c,gen:i,tier:tier});
+    }
+  });
+}
+
+function buildPerms(){
+  permList.innerHTML=""; permCards=[];
+  PERMS.forEach(function(p,i){
+    var c=card(p.ic,p.name,p.desc,"0",function(){ buyPerm(i); });
+    permList.appendChild(c.box);
+    permCards.push(c);
+  });
+}
+
+function buildAll(){ buildGens(); buildUps(); buildPerms(); }
+
+function syncModes(){
+  var kids=document.querySelectorAll("#buyModes button");
+  for(var i=0;i<kids.length;i++){
+    var m=kids[i].getAttribute("data-mode");
+    var on = (S.buyMode==="max" ? "max" : String(S.buyMode))===m;
+    kids[i].classList.toggle("on",on);
+  }
+}
+
+function updateUI(){
+  var rate=autoRate();
+  if(rate>S.bestRate) S.bestRate=rate;
+
+  elMoney.textContent=fmt(S.money);
+  elRate.textContent=fmt(rate);
+  elPoints.textContent=fmt(S.points);
+  elMult.textContent=globalMult().toFixed(1);
+  elClick.textContent=fmt(clickValue());
+
+  for(var i=0;i<GENS.length;i++){
+    var c=genCards[i];
+    var one=genCost(i,1);
+    var n = S.buyMode==="max" ? maxAffordable(i) : S.buyMode;
+    var costOne = S.buyMode==="max" ? genCost(i,Math.max(1,maxAffordable(i))) : genCost(i,n);
+    c.title.textContent=GENS[i].name+" ×"+S.gens[i];
+    c.sub.textContent="+"+fmt(prodOf(i))+" опыта/с";
+    c.btn.textContent = S.buyMode==="max" ? (maxAffordable(i)>0 ? "МАКС "+fmt(costOne) : "МАКС") : fmt(costOne);
+    c.btn.disabled = S.money < (S.buyMode==="max" ? genCost(i,1) : costOne);
+    c.box.classList.toggle("locked", S.money < genCost(i,1) && S.gens[i]===0);
+  }
+
+  for(var j=0;j<CLICK_UPS.length;j++){
+    var cc=clickCards[j], u=CLICK_UPS[j];
+    cc.btn.textContent = S.clickUps[j] ? "ЕСТЬ" : fmt(u.cost);
+    cc.btn.disabled = S.clickUps[j] || S.money<u.cost;
+    cc.box.classList.toggle("locked", !S.clickUps[j] && S.money<u.cost*0.2);
+  }
+
+  for(var k=0;k<genUpCards.length;k++){
+    var gu=genUpCards[k], key=gu.gen+"-"+gu.tier;
+    var req = gu.tier===1?10:30;
+    var cost = GENS[gu.gen].cost*(gu.tier===1?120:2500);
+    var have=!!S.genUps[key];
+    var open=S.gens[gu.gen]>=req;
+    gu.el.btn.textContent = have ? "ЕСТЬ" : (open ? fmt(cost) : "×"+req);
+    gu.el.btn.disabled = have || !open || S.money<cost;
+    gu.el.box.classList.toggle("locked", !have && !open);
+  }
+
+  for(var m=0;m<PERMS.length;m++){
+    var pc=permCards[m], p=PERMS[m];
+    var maxed=S.perms[m]>=p.max;
+    pc.title.textContent=p.name+" ур."+S.perms[m];
+    pc.btn.textContent = maxed ? "МАКС" : fmt(permCost(m));
+    pc.btn.disabled = maxed || S.points<permCost(m);
+  }
+
+  var g=prestigeGain();
+  elGain.textContent=g;
+  prestBtn.disabled = g<1;
+  prestBtn.textContent = g<1 ? "НУЖНО "+fmt(PRESTIGE_REQ)+" ОПЫТА" : "ПЕРЕРОДИТЬСЯ (+"+g+")";
+
+  document.getElementById("stAll").textContent="Всего заработано: "+fmt(S.totalAll);
+  document.getElementById("stTime").textContent="В игре: "+Math.floor(S.played/60)+"м";
+  document.getElementById("stPrest").textContent="Перерождений: "+S.prestiges;
+  document.getElementById("stBest").textContent="Лучший доход: "+fmt(S.bestRate)+"/с";
+}
+
+var toastEl=document.getElementById("toast"), toastT=0;
+function toast(msg){
+  toastEl.textContent=msg;
+  toastEl.classList.add("on");
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){ toastEl.classList.remove("on"); },1400);
+}
+
+/* ---------- ввод ---------- */
+var tapBtn=document.getElementById("tap");
+function tap(){
+  earn(clickValue());
+  updateUI();
+  tapBtn.classList.remove("pop");
+  void tapBtn.offsetWidth;
+  tapBtn.classList.add("pop");
+}
+tapBtn.addEventListener("click",tap);
+
+document.getElementById("buyModes").addEventListener("click",function(e){
+  var b=e.target.closest("button");
+  if(!b) return;
+  var m=b.getAttribute("data-mode");
+  S.buyMode = m==="max" ? "max" : parseInt(m,10);
+  var kids=this.querySelectorAll("button");
+  for(var i=0;i<kids.length;i++) kids[i].classList.toggle("on",kids[i]===b);
+  updateUI();
+});
+
+var nav=document.querySelector("nav");
+nav.addEventListener("click",function(e){
+  var b=e.target.closest("button");
+  if(!b) return;
+  var t=b.getAttribute("data-tab");
+  var btns=nav.querySelectorAll("button");
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle("on",btns[i]===b);
+  var tabs=document.querySelectorAll(".tab");
+  for(var j=0;j<tabs.length;j++) tabs[j].classList.toggle("on",tabs[j].id==="tab-"+t);
+  updateUI();
+});
+
+prestBtn.addEventListener("click",doPrestige);
+
+document.getElementById("resetBtn").addEventListener("click",function(){
+  if(!confirm("Точно стереть ВСЁ, включая Форму и вечные навыки?")) return;
+  S=fresh(); buildAll(); updateUI(); save(); toast("Сброшено");
+});
+
+/* ---------- оффлайн ---------- */
+function handleOffline(seconds){
+  if(seconds<60) return;
+  var capped=Math.min(seconds, 8*3600);
+  var gain=autoRate()*capped*offlineEfficiency();
+  if(gain<=0) return;
+  earn(gain);
+  var txt=document.getElementById("offlineText");
+  var h=Math.floor(capped/3600), m=Math.floor((capped%3600)/60);
+  txt.innerHTML="Ты отсутствовал "+h+"ч "+m+"м.<br>Накапало <b>"+fmt(gain)+"</b> опыта.";
+  document.getElementById("offlineModal").classList.remove("hidden");
+  save();
+}
+document.getElementById("offlineOk").addEventListener("click",function(){
+  document.getElementById("offlineModal").classList.add("hidden");
+});
+
+/* ---------- цикл ---------- */
+var last=Date.now(), acc=0;
+function loop(){
+  var now=Date.now();
+  var dt=(now-last)/1000; last=now;
+  if(dt>2) dt=2;
+  if(dt<0) dt=0;
+  earn(autoRate()*dt + autoClicks()*clickValue()*dt);
+  S.played+=dt;
+  acc+=dt;
+  if(acc>0.15){ acc=0; updateUI(); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- старт ---------- */
+var off=load();
+buildAll();
+syncModes();
+updateUI();
+handleOffline(off);
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden) save();
+  else { last=Date.now(); }
+});
+window.addEventListener("pagehide",save);
+setInterval(save,5000);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

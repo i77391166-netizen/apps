@@ -18,6 +18,33 @@
       "code": 13,
       "ver": "13.0",
       "color": "#39c07a"
+    },
+    {
+      "pkg": "com.ham.music",
+      "name": "Музыка",
+      "desc": "Плеер: всё аудио из памяти телефона",
+      "apk": "https://github.com/i77391166-netizen/apps/releases/download/latest/music-debug.apk",
+      "code": 1,
+      "ver": "1.0",
+      "color": "#ff5c9e"
+    },
+    {
+      "pkg": "cat.narezany.grind",
+      "name": "Гринд",
+      "desc": "Гринд: игра-кликер",
+      "apk": "https://github.com/i77391166-netizen/apps/releases/download/latest/grind-debug.apk",
+      "code": 1,
+      "ver": "1.0",
+      "color": "#f0a500"
+    },
+    {
+      "pkg": "com.example.myapp",
+      "name": "Заметки",
+      "desc": "Простые заметки на телефоне",
+      "apk": "https://github.com/i77391166-netizen/apps/releases/download/latest/myapp-debug.apk",
+      "code": 1,
+      "ver": "1.0",
+      "color": "#39c0a0"
     }
   ]
 }

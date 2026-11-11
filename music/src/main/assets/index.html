@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Музыка</title>
+<style>
+:root{
+  --bg:#0a0a0f;--txt:#f3f2f8;--dim:#9a9aa8;--dim2:#6e6e7c;
+  --line:rgba(255,255,255,.09);--card:rgba(255,255,255,.055);
+  --a1:#7c5cff;--a2:#ff5c9e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:-apple-system,"Roboto",system-ui,sans-serif;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;
+}
+body:before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(120% 70% at 8% -8%,#261b4a 0%,#120e22 45%,#0a0a0f 75%);
+}
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px}
+h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.6px;display:flex;align-items:baseline;gap:7px}
+h1 em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--dim2)}
+.hb{display:flex;gap:8px}
+.ibtn{
+  width:38px;height:38px;border-radius:13px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:15px;
+  display:flex;align-items:center;justify-content:center;padding:0;
+}
+.ibtn:active{background:rgba(255,255,255,.13)}
+.ibtn.on{background:linear-gradient(135deg,var(--a1),var(--a2));border-color:transparent}
+.sb{display:none;padding:0 16px 10px}
+.sb.show{display:flex;gap:8px}
+.sb input{
+  flex:1;height:40px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.05);color:var(--txt);padding:0 14px;font-size:14px;outline:none;
+}
+.sb input::placeholder{color:var(--dim2)}
+.tabs{display:flex;gap:8px;padding:0 16px 8px}
+.tab{
+  padding:7px 15px;border-radius:999px;border:0;font-size:13px;font-weight:600;
+  background:var(--card);color:var(--dim);font-family:inherit;
+}
+.tab.on{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff}
+main{flex:1;overflow-y:auto;padding:0 8px 96px;-webkit-overflow-scrolling:touch}
+.row{display:flex;gap:12px;align-items:center;padding:8px 10px;border-radius:15px;position:relative}
+.row:active{background:rgba(255,255,255,.06)}
+.row.on{background:rgba(124,92,255,.12)}
+.thumb{
+  width:47px;height:47px;border-radius:13px;flex:0 0 auto;overflow:hidden;
+  background:linear-gradient(135deg,#2b2352,#3d1f3f);color:#b9a8ff;
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.meta{flex:1;min-width:0}
+.tt{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.dd{font-size:12px;color:var(--dim2);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.eq{display:flex;align-items:flex-end;gap:2px;height:15px}
+.eq i{display:block;width:3px;border-radius:2px;background:linear-gradient(180deg,var(--a2),var(--a1));animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(1){height:60%;animation-delay:0s}
+.eq i:nth-child(2){height:100%;animation-delay:.15s}
+.eq i:nth-child(3){height:45%;animation-delay:.3s}
+@keyframes eq{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.empty{padding:60px 24px;text-align:center;color:var(--dim)}
+.empty b{display:block;font-size:17px;color:var(--txt);margin-bottom:8px}
+.empty p{margin:0 0 18px;font-size:13.5px;line-height:1.5}
+.gbtn{
+  border:0;border-radius:14px;padding:13px 22px;font-size:14px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));font-family:inherit;
+}
+.mini{
+  position:fixed;left:10px;right:10px;bottom:10px;height:64px;border-radius:20px;
+  background:rgba(30,27,48,.94);border:1px solid var(--line);
+  display:none;align-items:center;gap:11px;padding:0 9px;
+  box-shadow:0 12px 34px rgba(0,0,0,.5);
+}
+.mini.show{display:flex}
+.mini .thumb{width:46px;height:46px;border-radius:14px}
+.pbtn{
+  width:42px;height:42px;border-radius:50%;border:0;flex:0 0 auto;font-size:15px;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;
+}
+.sheet{
+  position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;
+  padding:14px 22px 26px;background:#0b0a12;
+  transform:translateY(101%);transition:transform .3s cubic-bezier(.22,.7,.2,1);
+}
+.sheet.show{transform:translateY(0)}
+.sheet:before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(100% 60% at 50% 0%,#2a1f52 0%,#0b0a12 62%);
+}
+.shHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px}
+.shHead .t{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);font-weight:700}
+.art{
+  flex:1;margin:16px 0 18px;border-radius:26px;overflow:hidden;
+  background:linear-gradient(140deg,#2b2352,#3d1f3f);color:#b9a8ff;
+  display:flex;align-items:center;justify-content:center;font-size:56px;
+  box-shadow:0 24px 60px rgba(0,0,0,.55);min-height:120px;
+}
+.art img{width:100%;height:100%;object-fit:cover;display:block}
+.shT{font-size:21px;font-weight:800;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shA{font-size:13.5px;color:var(--dim);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seek{margin-top:18px}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:22px;background:transparent;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:rgba(255,255,255,.14)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;
+  margin-top:-5px;box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.times{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim2);font-variant-numeric:tabular-nums;margin-top:2px}
+.ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:20px}
+.cbtn{
+  width:46px;height:46px;border-radius:50%;border:0;background:transparent;color:var(--txt);
+  font-size:19px;display:flex;align-items:center;justify-content:center;
+}
+.cbtn:active{background:rgba(255,255,255,.08)}
+.cbtn.big{font-size:25px}
+.cbtn.play{
+  width:70px;height:70px;font-size:26px;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 10px 26px rgba(124,92,255,.45);
+}
+.cbtn.dim{opacity:.42}
+.cbtn.acc{color:#c9b8ff}
+.modal{
+  position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);
+  display:flex;align-items:flex-end;justify-content:center;padding:0 0 0;
+}
+.mbox{
+  width:100%;background:#15131f;border-radius:22px 22px 0 0;padding:16px 16px 22px;
+  border-top:1px solid var(--line);max-height:80%;overflow-y:auto;
+}
+.mttl{font-size:15px;font-weight:800;margin:2px 4px 12px}
+.mitem{display:flex;justify-content:space-between;padding:13px 12px;border-radius:13px;font-size:14.5px;background:var(--card);margin-bottom:8px}
+.mitem:active{background:rgba(255,255,255,.13)}
+.mitem span{color:var(--dim2);font-size:12.5px}
+.mnew{display:flex;gap:8px;margin-top:6px}
+.mnew input{
+  flex:1;height:44px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);
+  color:var(--txt);padding:0 13px;font-size:14px;outline:none;font-family:inherit;
+}
+.mnew button{
+  border:0;border-radius:13px;padding:0 18px;font-size:14px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));font-family:inherit;
+}
+.mcancel{text-align:center;padding:14px;color:var(--dim);font-size:14px;margin-top:4px}
+.hint{padding:10px 12px 4px;font-size:11.5px;color:var(--dim2);text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Музыка<em id="cnt"></em></h1>
+    <div class="hb">
+      <button class="ibtn" id="bSearch">🔎</button>
+      <button class="ibtn" id="bShuffle">🔀</button>
+    </div>
+  </header>
+
+  <div class="sb" id="sb">
+    <input id="q" placeholder="Поиск: трек, исполнитель, альбом" autocomplete="off">
+    <button class="ibtn" id="qx">✕</button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-t="tracks">Треки</button>
+    <button class="tab" data-t="pl">Плейлисты</button>
+  </div>
+
+  <main id="main"></main>
+
+  <div class="mini" id="mini">
+    <div class="thumb" id="mArt">♪</div>
+    <div class="meta" id="mMeta">
+      <div class="tt" id="mT">—</div>
+      <div class="ss" id="mA">—</div>
+    </div>
+    <button class="pbtn" id="mPlay">▶</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="shHead">
+    <button class="ibtn" id="shClose">⌄</button>
+    <div class="t">Сейчас играет</div>
+    <button class="ibtn" id="shAdd">＋</button>
+  </div>
+  <div class="art" id="shArt">♪</div>
+  <div class="shT" id="shT">—</div>
+  <div class="shA" id="shA">—</div>
+  <div class="seek">
+    <input type="range" id="shSeek" min="0" max="1000" value="0">
+    <div class="times"><span id="shPos">0:00</span><span id="shDur">0:00</span></div>
+  </div>
+  <div class="ctrl">
+    <button class="cbtn dim" id="bRep">🔁</button>
+    <button class="cbtn big" id="bPrev">⏮</button>
+    <button class="cbtn play" id="bPlay">▶</button>
+    <button class="cbtn big" id="bNext">⏭</button>
+    <button class="cbtn dim" id="bShuf2">🔀</button>
+  </div>
+</div>
+
+<script>
+var M = window.Mus || {};
+var A = { tracks: [], tab: 'tracks', q: '', pl: null, repeat: 0, cur: null, playing: false, pos: 0, dur: 0, queue: [], qi: -1 };
+var PL = [];
+var ART = {};
+var VIS = [];
+var dragging = false;
+
+function $(id) { return document.getElementById(id); }
+function call(fn) {
+  try {
+    if (!M || typeof M[fn] !== 'function') return null;
+    var a = [].slice.call(arguments, 1);
+    return M[fn].apply(M, a);
+  } catch (e) { return null; }
+}
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function fmt(ms) {
+  ms = ms || 0;
+  var s = Math.floor(ms / 1000);
+  var m = Math.floor(s / 60);
+  s = s % 60;
+  if (m > 59) { var h = Math.floor(m / 60); m = m % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+function savePl() { try { localStorage.setItem('mu.pl', JSON.stringify(PL)); } catch (e) {} }
+
+function permOk() { return call('perm') === 'granted'; }
+
+function scan() {
+  var s = call('scan');
+  try { A.tracks = JSON.parse(s || '[]'); } catch (e) { A.tracks = []; }
+  render();
+  sync();
+}
+
+function visible() {
+  var q = A.q.trim().toLowerCase();
+  var arr = A.tracks;
+  if (A.pl) {
+    var p = null;
+    for (var i = 0; i < PL.length; i++) if (PL[i].n === A.pl) p = PL[i];
+    arr = [];
+    if (p) for (var j = 0; j < p.ids.length; j++) {
+      for (var k = 0; k < A.tracks.length; k++) if (A.tracks[k].id === p.ids[j]) { arr.push(A.tracks[k]); break; }
+    }
+  }
+  if (q) arr = arr.filter(function (t) {
+    return (t.t + ' ' + t.a + ' ' + t.al).toLowerCase().indexOf(q) >= 0;
+  });
+  return arr;
+}
+
+function rowHtml(t, i) {
+  var on = A.cur && A.cur.u === t.u;
+  var mark = on ? (A.playing ? '<span class="eq"><i></i><i></i><i></i></span>' : '❙❙') : '♪';
+  return '<div class="row' + (on ? ' on' : '') + '" data-i="' + i + '">' +
+    '<div class="thumb">' + mark + '</div>' +
+    '<div class="meta"><div class="tt">' + esc(t.t || 'Без названия') + '</div>' +
+    '<div class="ss">' + esc(t.a || 'Неизвестный исполнитель') + '</div></div>' +
+    '<div class="dd">' + fmt(t.d) + '</div></div>';
+}
+
+function render() {
+  var main = $('main');
+  $('cnt').textContent = A.tracks.length ? A.tracks.length + ' треков' : '';
+  if (!permOk()) {
+    main.innerHTML = '<div class="empty"><b>Нет доступа к музыке</b>' +
+      '<p>Разреши доступ к аудиофайлам — приложение покажет всё, что лежит в памяти телефона.</p>' +
+      '<button class="gbtn" id="grant">Разрешить доступ</button></div>';
+    var g = $('grant');
+    if (g) g.onclick = function () { call('requestPerm'); };
+    return;
+  }
+  if (A.tab === 'pl') { renderPl(); return; }
+  VIS = visible();
+  if (!VIS.length) {
+    main.innerHTML = '<div class="empty"><b>' + (A.q ? 'Ничего не найдено' : 'Треков нет') + '</b>' +
+      '<p>' + (A.q ? 'Попробуй другой запрос.' : 'В памяти телефона не нашлось аудиофайлов длиннее 8 секунд.') + '</p></div>';
+    return;
+  }
+  var h = '';
+  var n = Math.min(VIS.length, 600);
+  for (var i = 0; i < n; i++) h += rowHtml(VIS[i], i);
+  if (VIS.length > n) h += '<div class="hint">Показаны первые ' + n + ' из ' + VIS.length + ' — уточни поиском</div>';
+  main.innerHTML = h;
+}
+
+function renderPl() {
+  var main = $('main');
+  var h = '';
+  if (A.pl) {
+    var p = null;
+    for (var i = 0; i < PL.length; i++) if (PL[i].n === A.pl) p = PL[i];
+    h += '<div class="hint" style="text-align:left;padding-left:12px">Плейлист · <b>' + esc(A.pl) + '</b></div>';
+    VIS = visible();
+    if (!VIS.length) h += '<div class="empty"><p>Пусто. Зажми трек в списке и добавь его сюда.</p></div>';
+    for (var j = 0; j < VIS.length; j++) h += rowHtml(VIS[j], j);
+    main.innerHTML = h;
+    return;
+  }
+  h += '<div class="mitem" id="newPl" style="margin:6px 4px 12px"><b>＋ Новый плейлист</b></div>';
+  if (!PL.length) h += '<div class="empty"><p>Плейлистов пока нет.</p></div>';
+  for (var k = 0; k < PL.length; k++) {
+    h += '<div class="row" data-pl="' + k + '"><div class="thumb">♫</div>' +
+      '<div class="meta"><div class="tt">' + esc(PL[k].n) + '</div>' +
+      '<div class="ss">' + PL[k].ids.length + ' треков</div></div>' +
+      '<div class="dd">›</div></div>';
+  }
+  main.innerHTML = h;
+}
+
+function playList(arr, i) {
+  if (!arr || !arr.length || i < 0 || i >= arr.length) return;
+  A.queue = arr.slice();
+  A.qi = i;
+  A.cur = arr[i];
+  A.playing = true;
+  A.pos = 0;
+  A.dur = arr[i].d || 0;
+  call('play', JSON.stringify(A.queue), i, A.repeat);
+  loadArt();
+  updMini();
+  render();
+  sync();
+}
+
+function loadArt() {
+  var t = A.cur;
+  if (!t) return;
+  if (ART[t.u] !== undefined) { setArt(ART[t.u]); return; }
+  setArt('');
+  var d = call('art', t.u) || '';
+  ART[t.u] = d;
+  if (A.cur && A.cur.u === t.u) setArt(d);
+}
+
+function setArt(d) {
+  var html = d ? '<img src="' + d + '">' : '♪';
+  var a = $('shArt');
+  if (a) a.innerHTML = html;
+  var b = $('mArt');
+  if (b) b.innerHTML = d ? '<img src="' + d + '">' : '♪';
+}
+
+function updMini() {
+  var t = A.cur;
+  $('mini').className = 'mini' + (t ? ' show' : '');
+  $('mT').textContent = t ? (t.t || 'Без названия') : '—';
+  $('mA').textContent = t ? (t.a || 'Неизвестный исполнитель') : '—';
+  $('mPlay').textContent = A.playing ? '❙❙' : '▶';
+}
+
+function updSheet() {
+  var t = A.cur;
+  $('shT').textContent = t ? (t.t || 'Без названия') : '—';
+  $('shA').textContent = t ? (t.a || 'Неизвестный исполнитель') : '—';
+  $('bPlay').textContent = A.playing ? '❙❙' : '▶';
+  $('shPos').textContent = fmt(A.pos);
+  $('shDur').textContent = fmt(A.dur || (t ? t.d : 0));
+  if (!dragging) {
+    var d = A.dur || (t ? t.d : 0);
+    $('shSeek').value = d > 0 ? Math.round(A.pos * 1000 / d) : 0;
+  }
+  var r = $('bRep');
+  r.className = 'cbtn ' + (A.repeat ? 'acc' : 'dim');
+  r.textContent = A.repeat === 1 ? '🔂' : '🔁';
+}
+
+function sync() {
+  var s = call('state');
+  if (!s) return;
+  try { s = JSON.parse(s); } catch (e) { return; }
+  if (!s.run) {
+    A.playing = false;
+    updMini();
+    updSheet();
+    return;
+  }
+  A.playing = !!s.playing;
+  A.pos = s.pos || 0;
+  A.dur = s.dur || 0;
+  if (s.repeat !== undefined && s.repeat !== A.repeat) A.repeat = s.repeat;
+  if (s.track && (!A.cur || A.cur.u !== s.track.u)) {
+    A.cur = s.track;
+    A.qi = s.idx;
+    A.queue = A.queue.length ? A.queue : [];
+    loadArt();
+    render();
+  }
+  updMini();
+  updSheet();
+}
+
+function openSheet() {
+  if (!A.cur) return;
+  $('sheet').className = 'sheet show';
+  loadArt();
+  updSheet();
+}
+function closeSheet() { $('sheet').className = 'sheet'; }
+
+function addDialog(t) {
+  if (!t) return;
+  var h = '<div class="modal" id="modal"><div class="mbox"><div class="mttl">В плейлист</div>';
+  for (var i = 0; i < PL.length; i++) {
+    h += '<div class="mitem" data-add="' + i + '">' + esc(PL[i].n) + '<span>' + PL[i].ids.length + '</span></div>';
+  }
+  h += '<div class="mnew"><input id="npn" placeholder="Название нового"><button id="npb">Создать</button></div>';
+  h += '<div class="mcancel" id="mcc">Отмена</div></div></div>';
+  var box = document.createElement('div');
+  box.innerHTML = h;
+  document.body.appendChild(box.firstChild);
+  var md = $('modal');
+  md.addEventListener('click', function (e) {
+    var it = e.target.closest('[data-add]');
+    if (it) {
+      var idx = parseInt(it.getAttribute('data-add'), 10);
+      if (PL[idx] && PL[idx].ids.indexOf(t.id) < 0) PL[idx].ids.push(t.id);
+      savePl();
+      closeModal();
+      return;
+    }
+    if (e.target.id === 'mcc' || e.target === md) { closeModal(); return; }
+    if (e.target.id === 'npb') {
+      var v = $('npn').value.trim();
+      if (!v) return;
+      PL.push({ n: v, ids: [t.id] });
+      savePl();
+      closeModal();
+      if (A.tab === 'pl') render();
+    }
+  });
+}
+
+function closeModal() {
+  var md = $('modal');
+  if (md && md.parentNode) md.parentNode.removeChild(md);
+}
+
+function trackByIndex(i) {
+  return VIS[i];
+}
+
+function wire() {
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('.tab');
+    if (!b) return;
+    A.tab = b.getAttribute('data-t');
+    A.pl = null;
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].className = 'tab' + (tabs[i] === b ? ' on' : '');
+    render();
+  });
+
+  $('bSearch').onclick = function () {
+    var sb = $('sb');
+    sb.className = sb.className.indexOf('show') >= 0 ? 'sb' : 'sb show';
+    if (sb.className.indexOf('show') >= 0) $('q').focus();
+  };
+  $('qx').onclick = function () {
+    $('q').value = '';
+    A.q = '';
+    $('sb').className = 'sb';
+    render();
+  };
+  $('q').addEventListener('input', function (e) { A.q = e.target.value; render(); });
+
+  $('bShuffle').onclick = function () {
+    var arr = visible().slice();
+    if (!arr.length) return;
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    playList(arr, 0);
+    openSheet();
+  };
+
+  var lp = null, fired = false;
+  $('main').addEventListener('touchstart', function (e) {
+    var row = e.target.closest('.row');
+    fired = false;
+    if (!row || row.getAttribute('data-pl') !== null) return;
+    lp = setTimeout(function () {
+      fired = true;
+      var i = parseInt(row.getAttribute('data-i'), 10);
+      addDialog(trackByIndex(i));
+    }, 520);
+  }, { passive: true });
+  $('main').addEventListener('touchend', function () { clearTimeout(lp); });
+  $('main').addEventListener('touchmove', function () { clearTimeout(lp); });
+
+  $('main').addEventListener('click', function (e) {
+    if (fired) { fired = false; return; }
+    var plRow = e.target.closest('[data-pl]');
+    if (plRow) {
+      var k = parseInt(plRow.getAttribute('data-pl'), 10);
+      A.pl = PL[k].n;
+      A.tab = 'pl';
+      render();
+      return;
+    }
+    if (e.target.id === 'newPl') {
+      var nm = 'Плейлист ' + (PL.length + 1);
+      PL.push({ n: nm, ids: [] });
+      savePl();
+      A.pl = nm;
+      render();
+      return;
+    }
+    var row = e.target.closest('.row');
+    if (!row || row.getAttribute('data-i') === null) return;
+    var i = parseInt(row.getAttribute('data-i'), 10);
+    var arr = A.tab === 'pl' ? visible() : VIS;
+    playList(arr, i);
+  });
+
+  $('mini').addEventListener('click', function (e) {
+    if (e.target.id === 'mPlay') {
+      call('toggle');
+      A.playing = !A.playing;
+      updMini();
+      return;
+    }
+    openSheet();
+  });
+
+  $('shClose').onclick = closeSheet;
+  $('bPlay').onclick = function () { call('toggle'); A.playing = !A.playing; updMini(); updSheet(); };
+  $('mPlay').onclick = null;
+  $('bNext').onclick = function () { call('next'); setTimeout(sync, 90); };
+  $('bPrev').onclick = function () { call('prev'); setTimeout(sync, 90); };
+  $('bRep').onclick = function () {
+    A.repeat = (A.repeat + 1) % 3;
+    call('repeat', A.repeat);
+    try { localStorage.setItem('mu.rep', String(A.repeat)); } catch (e) {}
+    updSheet();
+  };
+  $('bShuf2').onclick = function () {
+    if (!A.queue.length) return;
+    var cur = A.cur;
+    var arr = A.queue.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    var ci = 0;
+    if (cur) {
+      for (var q = 0; q < arr.length; q++) if (arr[q].u === cur.u) { ci = q; break; }
+    }
+    playList(arr, ci);
+  };
+  $('shAdd').onclick = function () { addDialog(A.cur); };
+
+  var sk = $('shSeek');
+  sk.addEventListener('input', function () {
+    dragging = true;
+    var d = A.dur || (A.cur ? A.cur.d : 0);
+    $('shPos').textContent = fmt(Math.round(d * sk.value / 1000));
+  });
+  sk.addEventListener('change', function () {
+    var d = A.dur || (A.cur ? A.cur.d : 0);
+    var ms = Math.round(d * sk.value / 1000);
+    call('seek', ms);
+    A.pos = ms;
+    dragging = false;
+    $('shPos').textContent = fmt(ms);
+  });
+}
+
+window.mPerm = function (s) {
+  if (s === 'granted') scan();
+  else render();
+};
+window.mSync = function () { sync(); };
+window.mBack = function () {
+  var md = $('modal');
+  if (md) { closeModal(); return; }
+  var sh = $('sheet');
+  if (sh.className.indexOf('show') >= 0) { closeSheet(); return; }
+  call('exit');
+};
+
+function init() {
+  try { PL = JSON.parse(localStorage.getItem('mu.pl') || '[]'); } catch (e) { PL = []; }
+  if (!PL.length) PL = [];
+  A.repeat = parseInt(localStorage.getItem('mu.rep') || '0', 10) || 0;
+  wire();
+  if (permOk()) scan();
+  else render();
+  setInterval(sync, 500);
+  setTimeout(sync, 300);
+}
+
+init();
+</script>
+</body>
+</html>
