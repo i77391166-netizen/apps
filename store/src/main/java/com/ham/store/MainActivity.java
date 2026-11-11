@@ -24,8 +24,13 @@ import java.net.URL;
 
 public class MainActivity extends Activity {
 
-    public static final String CATALOG_URL =
-            "https://raw.githubusercontent.com/i77391166-netizen/apps/main/catalog.json";
+    public static final String[] CATALOG_URLS = {
+            "https://raw.githubusercontent.com/i77391166-netizen/apps/main/catalog.json",
+            "https://cdn.jsdelivr.net/gh/i77391166-netizen/apps@main/catalog.json",
+            "https://raw.githack.com/i77391166-netizen/apps/main/catalog.json"
+    };
+
+    public static volatile String LAST_ERR = "";
 
     public static MainActivity I;
     private WebView wv;
@@ -91,13 +96,16 @@ public class MainActivity extends Activity {
         HttpURLConnection c = null;
         try {
             c = (HttpURLConnection) new URL(url).openConnection();
-            c.setConnectTimeout(15000);
-            c.setReadTimeout(20000);
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(12000);
             c.setInstanceFollowRedirects(true);
             c.setRequestProperty("User-Agent", "ham-store");
             c.setRequestProperty("Accept", "application/json");
             int code = c.getResponseCode();
-            if (code != 200) return "";
+            if (code != 200) {
+                LAST_ERR = "HTTP " + code + " — " + url;
+                return "";
+            }
             InputStream in = c.getInputStream();
             ByteArrayOutputStream bo = new ByteArrayOutputStream();
             byte[] buf = new byte[16384];
@@ -106,6 +114,8 @@ public class MainActivity extends Activity {
             in.close();
             return new String(bo.toByteArray(), "UTF-8");
         } catch (Throwable t) {
+            String m = t.getMessage();
+            LAST_ERR = t.getClass().getSimpleName() + (m == null ? "" : (": " + m)) + " — " + url;
             return "";
         } finally {
             if (c != null) {
@@ -122,14 +132,24 @@ public class MainActivity extends Activity {
     }
 
     private String catalog() {
-        String fresh = httpText(CATALOG_URL);
-        if (fresh != null && fresh.trim().startsWith("{")) {
-            try {
-                prefs().edit().putString("cat", fresh).apply();
-            } catch (Throwable t) {
+        StringBuilder err = new StringBuilder();
+        for (String u : CATALOG_URLS) {
+            LAST_ERR = "";
+            String fresh = httpText(u);
+            if (fresh != null && fresh.trim().startsWith("{")) {
+                LAST_ERR = "";
+                try {
+                    prefs().edit().putString("cat", fresh).apply();
+                } catch (Throwable t) {
+                }
+                return fresh;
             }
-            return fresh;
+            String e = LAST_ERR;
+            if (e == null || e.length() == 0) e = "пустой ответ — " + u;
+            if (err.length() > 0) err.append("\n");
+            err.append(e);
         }
+        LAST_ERR = err.toString();
         String cached = prefs().getString("cat", "");
         if (cached == null) cached = "";
         return cached;
@@ -214,6 +234,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String catalog() {
             return catalog();
+        }
+
+        @JavascriptInterface
+        public String lastError() {
+            return LAST_ERR == null ? "" : LAST_ERR;
         }
 
         @JavascriptInterface
