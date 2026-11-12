@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b12">
+<title>ИИ</title>
+<style>
+:root{
+  --bg:#0b0b12;--txt:#f2f1f7;--dim:#9a9aac;--dim2:#6d6d80;
+  --line:rgba(255,255,255,.09);--card:rgba(255,255,255,.055);
+  --a1:#39c0a0;--a2:#7c5cff;--bad:#ff7b93;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:-apple-system,"Roboto",system-ui,sans-serif;font-size:15px;
+  overscroll-behavior:none;
+}
+body:before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(120% 60% at 10% -10%,#14303a 0%,#12101f 45%,#0b0b12 78%);
+}
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:8px;padding:14px 12px 10px}
+.hinfo{flex:1;min-width:0}
+h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.4px}
+#sub{font-size:11.5px;color:var(--dim2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibtn{
+  width:38px;height:38px;flex:0 0 auto;border-radius:13px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:16px;display:flex;
+  align-items:center;justify-content:center;padding:0;font-family:inherit;
+}
+.ibtn:active{background:rgba(255,255,255,.13)}
+main{flex:1;overflow-y:auto;padding:8px 12px 6px;-webkit-overflow-scrolling:touch}
+.msg{display:flex;margin-bottom:10px}
+.msg.u{justify-content:flex-end}
+.bub{
+  max-width:86%;padding:10px 13px;border-radius:16px;line-height:1.45;
+  white-space:pre-wrap;word-break:break-word;
+}
+.msg.u .bub{background:linear-gradient(135deg,#2f6f61,#3a4a8a);border-bottom-right-radius:6px}
+.msg.a .bub{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+.bub img{max-width:100%;border-radius:12px;display:block;margin-top:6px}
+.bub.err{border-color:rgba(255,123,147,.4);color:var(--bad)}
+.bub .cap{font-size:11px;color:var(--dim2);margin-top:6px}
+.dots{display:inline-block}
+.dots i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--dim);margin-right:4px;animation:bl 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}
+.dots i:nth-child(3){animation-delay:.3s;margin-right:0}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.empty{padding:60px 26px;text-align:center;color:var(--dim)}
+.empty b{display:block;color:var(--txt);font-size:16px;margin-bottom:8px}
+.empty p{margin:0;font-size:13px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.chip{
+  border:1px solid var(--line);background:var(--card);color:var(--txt);
+  border-radius:12px;padding:8px 12px;font-size:12.5px;font-family:inherit;
+}
+#composer{display:flex;gap:8px;align-items:flex-end;padding:8px 10px 14px;border-top:1px solid var(--line);background:rgba(11,11,18,.86)}
+#inp{
+  flex:1;min-height:44px;max-height:130px;resize:none;border-radius:14px;padding:11px 13px;
+  border:1px solid var(--line);background:var(--card);color:var(--txt);
+  font-family:inherit;font-size:15px;line-height:1.35;outline:none;
+}
+#send{
+  width:46px;height:44px;border:0;border-radius:14px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:17px;
+}
+#send:disabled{opacity:.45}
+#imgb{
+  width:44px;height:44px;flex:0 0 auto;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:15px;font-family:inherit;
+}
+#imgb.on{background:rgba(57,192,160,.22);border-color:rgba(57,192,160,.5)}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
+.box{
+  width:100%;max-height:92%;overflow-y:auto;background:#14131d;border-radius:22px 22px 0 0;
+  padding:16px 16px 22px;border-top:1px solid var(--line);
+}
+.box h2{margin:0 0 14px;font-size:16px;font-weight:800}
+.lbl{font-size:11.5px;color:var(--dim2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  flex:1 1 auto;border:1px solid var(--line);background:var(--card);color:var(--txt);
+  border-radius:12px;padding:11px 10px;font-size:13px;font-family:inherit;font-weight:600;
+}
+.pill.on{background:linear-gradient(135deg,rgba(57,192,160,.28),rgba(124,92,255,.28));border-color:rgba(57,192,160,.55)}
+input.f,textarea.f{
+  width:100%;border-radius:12px;border:1px solid var(--line);background:var(--card);
+  color:var(--txt);padding:12px;font-family:inherit;font-size:14px;outline:none;
+}
+textarea.f{min-height:78px;resize:vertical}
+.note{font-size:11.5px;color:var(--dim2);line-height:1.45;margin-top:8px}
+.big{
+  width:100%;margin-top:18px;border:0;border-radius:14px;padding:14px;
+  font-size:15px;font-weight:700;font-family:inherit;color:#fff;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+}
+.ghost{background:var(--card);border:1px solid var(--line);color:var(--txt);font-weight:600}
+.chatrow{display:flex;gap:10px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+.chatrow .t{flex:1;min-width:0}
+.chatrow .t b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatrow .t span{font-size:11.5px;color:var(--dim2)}
+.del{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--bad);font-size:15px}
+#toast{
+  position:fixed;left:50%;bottom:80px;transform:translate(-50%,16px);
+  background:#1d1a2e;border:1px solid var(--line);border-radius:13px;padding:10px 15px;
+  font-size:12.5px;max-width:88%;text-align:center;opacity:0;transition:.2s;pointer-events:none;z-index:60;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <button class="ibtn" id="bChats">☰</button>
+    <div class="hinfo">
+      <h1>ИИ</h1>
+      <div id="sub"></div>
+    </div>
+    <button class="ibtn" id="bNew">＋</button>
+    <button class="ibtn" id="bSet">⚙</button>
+  </header>
+  <main id="main"></main>
+  <div id="composer">
+    <button id="imgb" title="картинка">▣</button>
+    <textarea id="inp" rows="1" placeholder="Спроси что-нибудь…"></textarea>
+    <button id="send">➤</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+var D = {
+  chats: [],
+  cur: null,
+  cfg: {
+    provider: 'pollinations',
+    model: '',
+    key: '',
+    sys: 'Ты полезный ассистент. Отвечай по-русски, кратко и по делу.'
+  }
+};
+var busy = false;
+var imgMode = false;
+var pending = {};
+
+var DEF_MODEL = {
+  pollinations: 'openai',
+  gemini: 'gemini-2.0-flash',
+  groq: 'llama-3.3-70b-versatile',
+  openrouter: 'meta-llama/llama-3.3-70b-instruct:free'
+};
+var PROV_NAME = {
+  pollinations: 'Pollinations',
+  gemini: 'Google Gemini',
+  groq: 'Groq',
+  openrouter: 'OpenRouter'
+};
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function api(fn) {
+  try {
+    if (!window.AI || typeof window.AI[fn] !== 'function') return '';
+    var a = [].slice.call(arguments, 1);
+    return window.AI[fn].apply(window.AI, a);
+  } catch (e) { return ''; }
+}
+function toast(m) {
+  var t = $('toast');
+  t.textContent = m;
+  t.className = 'on';
+  clearTimeout(t._t);
+  t._t = setTimeout(function () { t.className = ''; }, 2800);
+}
+function uid() {
+  return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function loadState() {
+  var raw = api('get', 'state');
+  if (raw) {
+    try {
+      var o = JSON.parse(raw);
+      if (o && o.chats) D = o;
+    } catch (e) {}
+  }
+  if (!D.cfg) D.cfg = { provider: 'pollinations', model: '', key: '', sys: '' };
+  if (!D.chats) D.chats = [];
+  if (!D.cfg.provider) D.cfg.provider = 'pollinations';
+  if (!D.cur || !chatById(D.cur)) {
+    D.cur = D.chats.length ? D.chats[0].id : null;
+  }
+}
+function saveState() {
+  api('set', 'state', JSON.stringify(D));
+}
+function chatById(id) {
+  for (var i = 0; i < D.chats.length; i++) if (D.chats[i].id === id) return D.chats[i];
+  return null;
+}
+function curChat() {
+  var c = chatById(D.cur);
+  if (!c) {
+    c = { id: uid(), title: 'Новый чат', msgs: [] };
+    D.chats.unshift(c);
+    D.cur = c.id;
+    saveState();
+  }
+  return c;
+}
+function modelOf() {
+  var m = (D.cfg.model || '').trim();
+  return m || DEF_MODEL[D.cfg.provider] || 'openai';
+}
+
+function renderSub() {
+  $('sub').textContent = PROV_NAME[D.cfg.provider] + ' · ' + modelOf() +
+    (D.cfg.provider !== 'pollinations' && !D.cfg.key ? ' · нет ключа' : '');
+}
+
+function render() {
+  var c = curChat();
+  var main = $('main');
+  renderSub();
+  if (!c.msgs.length) {
+    main.innerHTML = '<div class="empty"><b>О чём поговорим?</b>' +
+      '<p>Пиши вопрос — отвечу. Кнопка ▣ слева от поля ввода рисует картинку по описанию.</p>' +
+      '<div class="chips">' +
+      '<button class="chip" data-q="Объясни простыми словами, как работает GPS">как работает GPS</button>' +
+      '<button class="chip" data-q="Придумай 5 идей для приложения на Android">идеи приложений</button>' +
+      '<button class="chip" data-q="Напиши короткое поздравление с днём рождения другу">поздравление</button>' +
+      '</div></div>';
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < c.msgs.length; i++) {
+    var m = c.msgs[i];
+    var who = m.r === 'u' ? 'u' : 'a';
+    var cls = 'bub' + (m.err ? ' err' : '');
+    var body = '';
+    if (m.img) {
+      body = '<img src="' + m.img + '" alt="">' + (m.t ? '<div class="cap">' + esc(m.t) + '</div>' : '');
+    } else if (m.wait) {
+      body = '<span class="dots"><i></i><i></i><i></i></span>';
+    } else {
+      body = esc(m.t || '');
+    }
+    h += '<div class="msg ' + who + '"><div class="' + cls + '">' + body + '</div></div>';
+  }
+  main.innerHTML = h;
+  main.scrollTop = main.scrollHeight;
+}
+
+function push(role, text, extra) {
+  var c = curChat();
+  var m = { r: role, t: text || '' };
+  if (extra) for (var k in extra) m[k] = extra[k];
+  c.msgs.push(m);
+  if (role === 'u' && c.title === 'Новый чат') {
+    c.title = (text || 'картинка').slice(0, 40);
+  }
+  saveState();
+  render();
+  return m;
+}
+
+function historyForApi(c) {
+  var out = [];
+  for (var i = 0; i < c.msgs.length; i++) {
+    var m = c.msgs[i];
+    if (m.wait || m.err || !m.t) continue;
+    out.push({ role: m.r === 'u' ? 'user' : 'assistant', content: m.t });
+  }
+  return out;
+}
+
+function send() {
+  var inp = $('inp');
+  var text = (inp.value || '').trim();
+  if (!text) return;
+  if (busy) { toast('Подожди, предыдущий ответ ещё идёт'); return; }
+
+  if (imgMode) {
+    inp.value = '';
+    inp.style.height = 'auto';
+    imgMode = false;
+    $('imgb').className = '';
+    var c0 = curChat();
+    push('u', text);
+    var w0 = push('a', '', { wait: true });
+    var id0 = 'r' + Date.now().toString(36);
+    pending[id0] = { chat: c0.id, msg: w0 };
+    busy = true;
+    $('send').disabled = true;
+    api('image', id0, text);
+    return;
+  }
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  var c = curChat();
+  push('u', text);
+  var w = push('a', '', { wait: true });
+  var id = 'r' + Date.now().toString(36);
+  pending[id] = { chat: c.id, msg: w };
+  busy = true;
+  $('send').disabled = true;
+  api('ask', id, D.cfg.provider, modelOf(), D.cfg.key || '', D.cfg.sys || '',
+    JSON.stringify(historyForApi(c)));
+}
+
+function finish(id, ok, text) {
+  var p = pending[id];
+  delete pending[id];
+  busy = false;
+  $('send').disabled = false;
+  var c = p ? chatById(p.chat) : null;
+  if (!c) { render(); return; }
+  var m = p.msg;
+  if (!m || c.msgs.indexOf(m) < 0) m = c.msgs[c.msgs.length - 1];
+  if (!m) return;
+  m.wait = false;
+  if (ok) {
+    m.t = text;
+    m.err = false;
+  } else {
+    m.t = text;
+    m.err = true;
+  }
+  saveState();
+  render();
+}
+
+window.mReply = function (id, ok, text) { finish(id, ok, text); };
+window.mImage = function (id, dataUri) {
+  var p = pending[id];
+  if (p && p.msg) {
+    delete pending[id];
+    busy = false;
+    $('send').disabled = false;
+    var c = chatById(p.chat);
+    if (c) {
+      var m = p.msg;
+      if (!m || c.msgs.indexOf(m) < 0) m = c.msgs[c.msgs.length - 1];
+      if (m) {
+        m.wait = false;
+        m.img = dataUri;
+        m.t = 'картинка по запросу';
+        m.err = false;
+      }
+      saveState();
+    }
+    render();
+    return;
+  }
+  finish(id, true, '');
+};
+
+function sheet(html) {
+  closeSheets();
+  var d = document.createElement('div');
+  d.className = 'sheet';
+  d.id = 'sheet';
+  d.innerHTML = '<div class="box">' + html + '</div>';
+  document.body.appendChild(d);
+  d.addEventListener('click', function (e) {
+    if (e.target.id === 'sheet') closeSheets();
+  });
+  return d;
+}
+function closeSheets() {
+  var s = $('sheet');
+  if (s && s.parentNode) s.parentNode.removeChild(s);
+}
+
+function openSettings() {
+  var provs = ['pollinations', 'gemini', 'groq', 'openrouter'];
+  var h = '<h2>Настройки</h2><div class="lbl">Провайдер</div><div class="row">';
+  for (var i = 0; i < provs.length; i++) {
+    h += '<button class="pill' + (D.cfg.provider === provs[i] ? ' on' : '') +
+      '" data-prov="' + provs[i] + '">' + PROV_NAME[provs[i]] + '</button>';
+  }
+  h += '</div><div class="lbl">Модель</div>' +
+    '<input class="f" id="fModel" placeholder="' + esc(DEF_MODEL[D.cfg.provider]) + '" value="' +
+    esc(D.cfg.model || '') + '">' +
+    '<div class="lbl">Ключ API</div>' +
+    '<input class="f" id="fKey" type="password" placeholder="для Pollinations не нужен" value="' +
+    esc(D.cfg.key || '') + '">' +
+    '<div class="lbl">Системная инструкция</div>' +
+    '<textarea class="f" id="fSys">' + esc(D.cfg.sys || '') + '</textarea>' +
+    '<div class="note">Pollinations работает вообще без ключа и без регистрации — бесплатно и с лимитами. ' +
+    'Gemini, Groq и OpenRouter дают бесплатные ключи на своих сайтах, там модели сильнее и лимиты выше. ' +
+    'Ключ хранится только на телефоне.</div>' +
+    '<button class="big" id="bSave">Сохранить</button>';
+  var s = sheet(h);
+
+  s.querySelectorAll('[data-prov]').forEach(function (b) {
+    b.onclick = function () {
+      D.cfg.provider = b.getAttribute('data-prov');
+      var m = $('fModel');
+      var k = $('fKey');
+      if (m) m.value = '';
+      if (k) k.value = D.cfg.provider === 'pollinations' ? '' : (D.cfg.key || '');
+      s.querySelectorAll('[data-prov]').forEach(function (x) { x.className = 'pill'; });
+      b.className = 'pill on';
+      if (m) m.placeholder = DEF_MODEL[D.cfg.provider];
+    };
+  });
+
+  $('bSave').onclick = function () {
+    D.cfg.model = ($('fModel').value || '').trim();
+    D.cfg.key = ($('fKey').value || '').trim();
+    D.cfg.sys = $('fSys').value || '';
+    saveState();
+    closeSheets();
+    renderSub();
+    toast('Сохранено');
+  };
+}
+
+function openChats() {
+  var h = '<h2>Чаты</h2>';
+  if (!D.chats.length) h += '<div class="note">Пока пусто.</div>';
+  for (var i = 0; i < D.chats.length; i++) {
+    var c = D.chats[i];
+    h += '<div class="chatrow"><div class="t" data-open="' + c.id + '">' +
+      '<b>' + esc(c.title || 'Чат') + '</b>' +
+      '<span>' + (c.msgs ? c.msgs.length : 0) + ' сообщений</span></div>' +
+      '<button class="del" data-del="' + c.id + '">✕</button></div>';
+  }
+  h += '<button class="big ghost" id="bCloseChats">Закрыть</button>';
+  var s = sheet(h);
+
+  s.querySelectorAll('[data-open]').forEach(function (e) {
+    e.onclick = function () {
+      D.cur = e.getAttribute('data-open');
+      saveState();
+      closeSheets();
+      render();
+    };
+  });
+  s.querySelectorAll('[data-del]').forEach(function (e) {
+    e.onclick = function () {
+      var id = e.getAttribute('data-del');
+      D.chats = D.chats.filter(function (x) { return x.id !== id; });
+      if (D.cur === id) D.cur = D.chats.length ? D.chats[0].id : null;
+      saveState();
+      closeSheets();
+      openChats();
+      render();
+    };
+  });
+  $('bCloseChats').onclick = closeSheets;
+}
+
+window.mBack = function () {
+  if ($('sheet')) { closeSheets(); return; }
+  api('exit');
+};
+
+function wire() {
+  $('bNew').onclick = function () {
+    var c = { id: uid(), title: 'Новый чат', msgs: [] };
+    D.chats.unshift(c);
+    D.cur = c.id;
+    saveState();
+    render();
+    $('inp').focus();
+  };
+  $('bSet').onclick = openSettings;
+  $('bChats').onclick = openChats;
+  $('send').onclick = send;
+  $('imgb').onclick = function () {
+    imgMode = !imgMode;
+    $('imgb').className = imgMode ? 'on' : '';
+    $('inp').placeholder = imgMode ? 'Опиши картинку…' : 'Спроси что-нибудь…';
+    toast(imgMode ? 'Режим картинки: напиши описание' : 'Обычный чат');
+  };
+  var inp = $('inp');
+  inp.addEventListener('input', function () {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 130) + 'px';
+  });
+  $('main').addEventListener('click', function (e) {
+    var q = e.target.closest('[data-q]');
+    if (!q) return;
+    $('inp').value = q.getAttribute('data-q');
+    send();
+  });
+}
+
+loadState();
+wire();
+render();
+</script>
+</body>
+</html>

@@ -45,6 +45,15 @@
       "code": 1,
       "ver": "1.0",
       "color": "#39c0a0"
+    },
+    {
+      "pkg": "com.ham.ai",
+      "name": "ИИ",
+      "desc": "Чат с ИИ и картинки, без ключа",
+      "apk": "https://github.com/i77391166-netizen/apps/releases/download/latest/ai-debug.apk",
+      "code": 1,
+      "ver": "1.0",
+      "color": "#39c0a0"
     }
   ]
 }
